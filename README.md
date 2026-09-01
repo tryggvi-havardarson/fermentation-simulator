@@ -32,7 +32,6 @@ This project is being developed in multiple versions, with each version focusing
 
 - ABV, specific gravity (SG), and Brix calculations.
 - Feedstock database with sugar composition.
-- Nutrient availability model.
 - Target batch calculator (volume, feedstock, and target ABV).
 - CO₂ production and fermenter weight calculations.
 - Unit conversion tools.

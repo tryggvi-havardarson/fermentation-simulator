@@ -1,0 +1,36 @@
+import sympy as sp
+import numpy as np
+
+a = -15222
+b = 19.25
+c = 0.026056
+d = 3.99e-6
+e = -2.83e-9
+
+coeffs = [e, d, c, b, a]
+
+roots = np.roots(coeffs)
+
+print(roots)
+
+T = sp.symbols('T')
+if False:
+    A=33.24
+    B=0.01924
+    C=1.055e-5
+    D=-3.59e-9
+
+A=19.25
+B=0.05213
+C=1.197e-5
+D=-1.132e-8
+
+T1=303.15
+T2=1073.15
+mol=4000
+Cp = A + B*T + C*T**2 + D*T**3
+
+dCp_dT = sp.integrate(Cp)
+Q = sp.integrate(Cp, (T, T1, T2))
+
+print(Q*mol)

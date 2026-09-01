@@ -15,3 +15,17 @@ chemicals = {
     "carbon_dioxide": {"chemical_formula": "CO2", "molar_mass": 44.01},
     "water": {"chemical_formula": "H2O", "molar_mass": 18.02},
 }
+
+feedstock_database = {
+    "gestus_acacia": {
+        "density": 1.326,# g/mL
+        "sugar_mass_concentration": 0.760,# g sugar/100g honey
+        "price_per_kilogram": 1997#isk/kg
+    },
+
+    "rowse_squeezy_honey": {
+        "density": None,
+        "sugar_mass_concentration": 0.808,
+        "price_per_kilogram": 1154
+    }
+}
