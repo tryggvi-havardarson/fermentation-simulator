@@ -1,11 +1,12 @@
-import database
 import kinetics
 import numpy as np
 import plotting
 from reactor import Reactor
 from yeast import Yeast
 
-chemicals = database.chemicals
+from v3.database import databases
+
+chemicals = databases.chemicals
 
 
 class FermentationSimulator:

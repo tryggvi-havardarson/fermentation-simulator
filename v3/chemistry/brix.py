@@ -1,22 +1,14 @@
 water_density_20C = 998.2067  # kg/m^3
+from pathlib import Path
+
 import pandas as pd
-from scipy.optimize import root_scalar
 
+from v3.chemistry.abv import abv_calculator, gravity_calculator
 
-def abv_calculator(OG, FG):
-    abv = ((76.08 * (OG - FG)) / (1.775 - OG)) * (FG / 0.794)
+v3_folder = Path(__file__).parent.parent
+csv_file = v3_folder / "database" / "brix_data.csv"
 
-    return round(abv, ndigits=3)
-
-
-def gravity_calculator(abv, FG):
-
-    def OG_equation(OG):
-        return abv - ((76.08 * (OG - FG)) / (1.775 - OG)) * (FG / 0.794)
-
-    solution = root_scalar(OG_equation, x0=0, x1=1)
-
-    return solution.root
+df = pd.read_csv(csv_file)
 
 
 def brix_to_volume(m_honey, brix_honey, brix_target):
@@ -36,9 +28,6 @@ def linear_interpolation(x, x1, x2, y1, y2):
 
 
 def gravity_brix(x, command):
-    df = pd.read_csv(
-        "C:/Users/trygg/OneDrive/Documents/GitHub/fermentation-simulator/v3/brix_data.csv"
-    )
 
     target = x
 
@@ -80,7 +69,10 @@ def gravity_brix(x, command):
 
 
 def target_water_volume(m_honey, brix_honey, target_abv):
-    target_OG = gravity_calculator(target_abv)
+
+    FG = 1.000
+
+    target_OG = gravity_calculator(target_abv, FG)
     brix_target = gravity_brix(target_OG, "brix")
     volume_of_water_litres = brix_to_volume(m_honey, brix_honey, brix_target)
 
@@ -102,7 +94,10 @@ def brix_to_tot_mass(brix, m_sugar):
 
 
 def target_volume(target_abv, target_volume, brix_honey):
-    target_OG = gravity_calculator(target_abv)
+
+    FG = 1.000
+
+    target_OG = gravity_calculator(target_abv, FG)
     target_density = target_OG * water_density_20C
     target_tot_mass = target_density * target_volume
     target_brix = gravity_brix(target_OG, "brix")
@@ -115,5 +110,5 @@ def target_volume(target_abv, target_volume, brix_honey):
     print(f"Target water volume is: {target_water_volume}L")
 
 
-print(abv_calculator(1.034,1.006))
-print(abv_calculator(1.0385,1.008))
+print(abv_calculator(1.034, 1.006))
+print(abv_calculator(1.0385, 1.008))

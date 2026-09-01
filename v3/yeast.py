@@ -1,6 +1,6 @@
-import database
+from v3.database import databases
 
-yeast_database = database.yeast_database
+yeast_database = databases.yeast_database
 
 class Yeast:
     def __init__(self, name: str) -> None:
