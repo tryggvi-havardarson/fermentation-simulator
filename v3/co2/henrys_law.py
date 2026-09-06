@@ -23,13 +23,13 @@ glucoes_info = {
 
 def kH(T,k_ref,H_sol):
 
-    kH=k_ref*np.exp((
+    kH_value=k_ref*np.exp((
         H_sol/R
     )*(
         (1/T_ref)-(1/T)
     ))
 
-    return kH
+    return kH_value
 
 
 
@@ -38,11 +38,11 @@ def kH_blend(T,w_water,w_ethanol):
     kH_water=kH(T,water_info["Kh_ref"],water_info["H_sol"])
     kH_ethanol=kH(T,ethanol_info["Kh_ref"],ethanol_info["H_sol"])
 
-    kH_blend=np.exp(
+    kH_blend_value=np.exp(
         w_water*np.log(kH_water)+w_ethanol*np.log(kH_ethanol)
     )
 
-    return kH_blend
+    return kH_blend_value
 
 
 
@@ -55,11 +55,11 @@ def Ks(T,Ks_ref,m):
 
 
 
-def glucose_effect(T,C_glucose,w_water,w_ethanol):
+def kH_final(T,C_glucose,w_water,w_ethanol):
 
     Ks_value=Ks(T,glucoes_info["Ks_ref"],glucoes_info["temp_sens_factor"])
     kH_blend_value=kH_blend(T,w_water,w_ethanol)
 
-    kH_final=kH_blend_value*10**(Ks_value*C_glucose)
+    kH_final_value=kH_blend_value*10**(Ks_value*C_glucose)
 
-    return kH_final
+    return kH_final_value

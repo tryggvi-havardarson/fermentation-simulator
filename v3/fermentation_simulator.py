@@ -1,9 +1,11 @@
 import kinetics
 import numpy as np
 import plotting
+from batch import Batch
 from reactor import Reactor
 from yeast import Yeast
 
+from v3.co2.co2_model import CarbonDioxideModel
 from v3.database import databases
 
 chemicals = databases.chemicals
@@ -14,14 +16,14 @@ class FermentationSimulator:
         self,
         reactor: Reactor,
         yeast: Yeast,
-        sugar_mass: float,
-        biomass_mass: float,
+        carbon_dioxided_model: CarbonDioxideModel,
+        batch: Batch,
         simulation_time: float,
     ) -> None:
-        if sugar_mass < 0:
+        if batch.sugar_mass < 0:
             raise ValueError("Sugar mass cannot be negative.")
 
-        if biomass_mass < 0:
+        if batch.biomass_mass < 0:
             raise ValueError("Biomass cannot be negative.")
 
         if simulation_time <= 0:
@@ -29,8 +31,8 @@ class FermentationSimulator:
 
         self.reactor = reactor
         self.yeast = yeast
-        self.sugar_mass = sugar_mass
-        self.biomass_mass = biomass_mass
+        self.carbon_dioxided_model = carbon_dioxided_model
+        self.biomass_mass = batch.biomass_mass
         self.simulation_time = simulation_time
 
         self.dt = 0.001
@@ -42,7 +44,7 @@ class FermentationSimulator:
         self.ethanol_concentration = None
 
     def mass_to_concentration(self, mass: float) -> float:
-        return mass / self.reactor.volume
+        return mass / self.batch.liquid_volume
 
     def euler(self, Xn: float, Sn: float, mu_max: float) -> tuple:
         En = 0
@@ -53,6 +55,8 @@ class FermentationSimulator:
         sugar_concentration = [Sn]
         ethanol_concentration = [En]
 
+        self.carbon_dioxided_model.update_values(En, Sn)
+        
         while count < (self.simulation_time / self.dt) and Sn > 1e-9:
             X = Xn + (self.dt * (Xn * mu_max * Sn)) / (self.yeast.Ks + Sn)
             S = Sn - (self.dt * (mu_max * Xn * Sn)) / (
@@ -72,6 +76,8 @@ class FermentationSimulator:
                     / chemicals["glucose"]["molar_mass"]
                 )
             )
+
+            self.carbon_dioxided_model.update_values(En, Sn)
 
             biomass_mass.append(Xn)
             sugar_concentration.append(Sn)
@@ -112,9 +118,9 @@ class FermentationSimulator:
                                 FERMENTATION SIMULATION
         ======================================================================
 
-        Reactor
+        Batch
         ----------------------------------------------------------------------
-        Volume                : {self.reactor.volume} L
+        Volume                : {self.batch.liquid_volume} L
         Temperature           : {self.reactor.T_set} °C
 
 
@@ -136,10 +142,10 @@ class FermentationSimulator:
         ----------------------------------------------------------------------
         Component              Initial (g)        Final (g)
         ----------------------------------------------------------------------
-        Biomass             {self.biomass_mass:12.2f}   {self.reactor.volume * self.biomass_concentration[-1]:12.2f}
-        Sugar               {self.sugar_mass:12.2f}   {self.reactor.volume * self.sugar_concentration[-1]:12.2f}
-        Ethanol             {0:12.2f}   {self.reactor.volume * self.ethanol_concentration[-1]:12.2f}
-        Carbon dioxide      {0:12.2f}   {((self.reactor.volume * self.ethanol_concentration[-1]) / (chemicals["ethanol"]["molar_mass"])) * chemicals["carbon_dioxide"]["molar_mass"]:12.2f}
+        Biomass             {self.biomass_mass:12.2f}   {self.batch.liquid_volume * self.biomass_concentration[-1]:12.2f}
+        Sugar               {self.sugar_mass:12.2f}   {self.batch.liquid_volume * self.sugar_concentration[-1]:12.2f}
+        Ethanol             {0:12.2f}   {self.batch.liquid_volume * self.ethanol_concentration[-1]:12.2f}
+        Carbon dioxide      {0:12.2f}   {((self.batch.liquid_volume * self.ethanol_concentration[-1]) / (chemicals["ethanol"]["molar_mass"])) * chemicals["carbon_dioxide"]["molar_mass"]:12.2f}
         ----------------------------------------------------------------------
         """)
 

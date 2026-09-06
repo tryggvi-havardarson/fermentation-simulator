@@ -31,3 +31,5 @@ def target_volume(target_abv, target_volume, brix_honey):
 
     print(f"Target honey mass is: {target_honey_mass}g")
     print(f"Target water volume is: {target_water_volume}g")
+
+target_volume(4.5,4,80)
