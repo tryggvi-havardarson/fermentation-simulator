@@ -2,11 +2,12 @@ from v3.chemistry import abv, brix
 
 water_density_20C = 998.2067  # kg/m^3
 
+
 def target_water_volume(m_honey, brix_honey, target_abv):
 
     FG = 1.000
 
-    target_OG = brix.gravity_calculator(target_abv, FG)
+    target_OG = abv.gravity_calculator(target_abv, FG)
     brix_target = brix.gravity_brix(target_OG, "brix")
     volume_of_water_litres = brix.brix_to_volume(m_honey, brix_honey, brix_target)
 
@@ -29,4 +30,4 @@ def target_volume(target_abv, target_volume, brix_honey):
     target_water_volume = target_water_mass / water_density_20C
 
     print(f"Target honey mass is: {target_honey_mass}g")
-    print(f"Target water volume is: {target_water_volume}L")
+    print(f"Target water volume is: {target_water_volume}g")

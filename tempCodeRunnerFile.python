@@ -1,36 +1,73 @@
-import sympy as sp
-import numpy as np
+mol_massi_vatn=18.01528
 
-a = -15222
-b = 19.25
-c = 0.026056
-d = 3.99e-6
-e = -2.83e-9
+def varma_blabla(A,B,C,D,T):
+    svar = (A*T+B*(T**2)/2+C*(T**3)/3+D*(T**4)/4)
+    return svar
 
-coeffs = [e, d, c, b, a]
+def tegurdaeumo(T1,T2,A,B,C,D):
+    svar = varma_blabla(A,B,C,D,T2)-varma_blabla(A,B,C,D,T1)
+    return svar
 
-roots = np.roots(coeffs)
-
-print(roots)
-
-T = sp.symbols('T')
-if False:
+def daemi22():
+    mol=(200/18.01528)
+    T1=373.15
+    T2=673.15
     A=33.24
     B=0.01924
     C=1.055e-5
-    D=-3.59e-9
+    D=-3.596e-9
+    svar=tegurdaeumo(T1,T2,A,B,C,D)
+    return svar*mol
 
-A=19.25
-B=0.05213
-C=1.197e-5
-D=-1.132e-8
 
-T1=303.15
-T2=1073.15
-mol=4000
-Cp = A + B*T + C*T**2 + D*T**3
+mol_massi_vatn = 18.01528
 
-dCp_dT = sp.integrate(Cp)
-Q = sp.integrate(Cp, (T, T1, T2))
+def varma_blabla(A, B, C, D, T):
+    svar = A*T + B*(T**2)/2 + C*(T**3)/3 + D*(T**4)/4
+    return svar
 
-print(Q*mol)
+def tegurdaeumo(T1, T2, A, B, C, D):
+    svar = varma_blabla(A, B, C, D, T2) - varma_blabla(A, B, C, D, T1)
+    return svar
+
+
+def daemi6():
+    # Mass flows kg/min
+    m1 = 75
+    m2 = 95
+
+    # Temperatures K
+    T1 = 278.15   # 5 C
+    T2 = 353.15   # 80 C
+    T3 = 298.15   # 25 C
+    Tout = 316.15 # 43 C
+
+    # Cp coefficients for liquid water
+    # Put your Table B.17 values here
+    A = 72.43
+    B = 0.0104
+    C = 0
+    D = 0
+
+    # Enthalpy changes, J/mol
+    dh1 = tegurdaeumo(T1, Tout, A, B, C, D)
+    dh2 = tegurdaeumo(T2, Tout, A, B, C, D)
+    dh3 = tegurdaeumo(T3, Tout, A, B, C, D)
+
+    # Convert known streams from kg/min -> mol/min
+    n1 = m1 * 1000 / mol_massi_vatn
+    n2 = m2 * 1000 / mol_massi_vatn
+
+    # Energy balance:
+    # n1*dh1 + n2*dh2 + n3*dh3 = 0
+
+    n3 = -(n1*dh1 + n2*dh2) / dh3
+
+    # mol/min -> kg/min
+    m3 = n3 * mol_massi_vatn / 1000
+
+    return m3
+
+
+print('svar við dæmi 6:', daemi6(), 'kg/min')
+print('svar við dæmi 2.2:',{daemi22()})

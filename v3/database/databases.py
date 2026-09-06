@@ -10,10 +10,10 @@ yeast_database = {
 }
 
 chemicals = {
-    "glucose": {"chemical_formula": "C6H12O6", "molar_mass": 180.16},
-    "ethanol": {"chemical_formula": "C2H5OH", "molar_mass": 46.07},
-    "carbon_dioxide": {"chemical_formula": "CO2", "molar_mass": 44.01},
-    "water": {"chemical_formula": "H2O", "molar_mass": 18.02},
+    "glucose": {"chemical_formula": "C6H12O6", "molar_mass": 180.16,},
+    "ethanol": {"chemical_formula": "C2H5OH", "molar_mass": 46.07,},
+    "carbon_dioxide": {"chemical_formula": "CO2", "molar_mass": 44.01,},
+    "water": {"chemical_formula": "H2O", "molar_mass": 18.02,},
 }
 
 feedstock_database = {
