@@ -1,8 +1,7 @@
-from batch import Batch
-from reactor import Reactor
-
+from v3.batch import Batch
 from v3.co2 import henrys_law
 from v3.database.databases import chemicals
+from v3.reactor import Reactor
 
 R = 0.08206
 
@@ -45,7 +44,7 @@ class CarbonDioxideModel:
 
         self.ethanol_concentration = new_value
 
-    def fizz_velocity_constant(self, Rg, K=0.5, b1=1.8, b2=2.5, alpha=0.5, beta=-0.4, gamma=0.3):
+    def update_fizz_velocity_constant(self, Rg, K=0.5, b1=1.8, b2=2.5, alpha=0.5, beta=-0.4, gamma=0.3):
 
         self.fizz_velocity_constant_value = K*((Rg)**alpha)*((1+b1*self.glucose_molarity)**beta)*((1+b2*self.w_ethanol)**gamma)
 
@@ -69,14 +68,18 @@ class CarbonDioxideModel:
 
     def update_gas_production_speed(self, new_ethanol_value)->None:
 
-        previous_ethanol_concentration = self.ethanol_concentration
-        updated_ethanol_concentration = self.update_ethanol_concentration(new_ethanol_value)
+        if self.ethanol_concentration is not None:
+            previous_ethanol_concentration = self.ethanol_concentration
 
-        self.gas_production_speed = (
-            ((updated_ethanol_concentration)-(previous_ethanol_concentration)
-            )*self.batch.liquid_volume*self.dt
-            )
+            self.update_ethanol_concentration(new_ethanol_value)
 
+            self.gas_production_speed = (
+                ((self.ethanol_concentration)-(previous_ethanol_concentration)
+                )*self.batch.liquid_volume*self.dt
+                )
+        else:
+            self.update_ethanol_concentration(new_ethanol_value)
+            self.gas_production_speed = self.ethanol_concentration
     def update_carbon_dioxide_liquid_molarity(self)->None:
 
         dCco2_dt = (self.gas_production_speed/self.batch.liquid_volume)-self.gas_transfer_speed_value
@@ -120,7 +123,7 @@ class CarbonDioxideModel:
     def update_mass_transfer(self)->None:
 
         M_air = ((chemicals["oxygen"]["molar_mass"]*0.21)+
-                 (chemicals[""]["molar_mass"]*0.79))
+                 (chemicals["nitrogen"]["molar_mass"]*0.79))
         M_co2 = chemicals["carbon_dioxide"]["molar_mass"]
 
         mass_transfer_value = (
@@ -143,7 +146,8 @@ class CarbonDioxideModel:
 
         self.update_glucose_molarity()
         self.update_kH()
-        self.update_gas_transfer_speed(self.gas_production_speed)
+        self.update_fizz_velocity_constant(self.gas_production_speed)
+        self.update_gas_transfer_speed()
         self.update_yco2()
         self.update_carbon_dioxide_liquid_molarity()
         self.update_mass_transfer()

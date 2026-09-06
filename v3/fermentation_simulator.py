@@ -1,12 +1,11 @@
-import kinetics
 import numpy as np
-import plotting
-from batch import Batch
-from reactor import Reactor
-from yeast import Yeast
 
+from v3 import kinetics, plotting
+from v3.batch import Batch
 from v3.co2.co2_model import CarbonDioxideModel
 from v3.database import databases
+from v3.reactor import Reactor
+from v3.yeast import Yeast
 
 chemicals = databases.chemicals
 
@@ -32,7 +31,9 @@ class FermentationSimulator:
         self.reactor = reactor
         self.yeast = yeast
         self.carbon_dioxided_model = carbon_dioxided_model
+        self.batch = batch
         self.biomass_mass = batch.biomass_mass
+        self.sugar_mass = batch.sugar_mass
         self.simulation_time = simulation_time
 
         self.dt = 0.001
@@ -109,6 +110,7 @@ class FermentationSimulator:
             self.sugar_concentration,
             self.ethanol_concentration,
             self.fermentation_time,
+            
         ) = self.euler(biomass_concentration, sugar_concentration, self.mu_max)
 
 
