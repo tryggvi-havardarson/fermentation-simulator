@@ -36,7 +36,7 @@ class FermentationSimulator:
         self.sugar_mass = batch.sugar_mass
         self.simulation_time = simulation_time
 
-        self.dt = 0.001
+        self.dt = 3.6e-3
         self.fermentation_time = 0
 
         self.mu_max = None
@@ -57,8 +57,8 @@ class FermentationSimulator:
         ethanol_concentration = [En]
 
         self.carbon_dioxided_model.update_values(En, Sn)
-        
-        while count < (self.simulation_time / self.dt) and Sn > 1e-9:
+
+        while count < (self.simulation_time / self.dt) and Sn > 1e-6:
             X = Xn + (self.dt * (Xn * mu_max * Sn)) / (self.yeast.Ks + Sn)
             S = Sn - (self.dt * (mu_max * Xn * Sn)) / (
                 self.yeast.Y_xs * (self.yeast.Ks + Sn)
@@ -110,50 +110,55 @@ class FermentationSimulator:
             self.sugar_concentration,
             self.ethanol_concentration,
             self.fermentation_time,
-            
         ) = self.euler(biomass_concentration, sugar_concentration, self.mu_max)
 
-
     def print_status(self) -> None:
-        print(f"""
-        ======================================================================
-                                FERMENTATION SIMULATION
-        ======================================================================
+        def print_status(self) -> None:
+            print(f"""
+======================================================================
+                    FERMENTATION SIMULATION
+======================================================================
 
-        Batch
-        ----------------------------------------------------------------------
-        Volume                : {self.batch.liquid_volume} L
-        Temperature           : {self.reactor.T_set} °C
-
-
-        Yeast
-        ----------------------------------------------------------------------
-        Strain                : {self.yeast.name}
-        Maximum growth (μmax) : {self.mu_max:.3f} h⁻¹
-        Ks                    : {self.yeast.Ks} g/L
+Reactor
+----------------------------------------------------------------------
+Volume                : {self.reactor.volume:.2f} L
+Temperature setpoint  : {self.reactor.T_set:.2f} °C
+Total pressure        : {self.reactor.P_tot:.2f}
 
 
-        Simulation
-        ----------------------------------------------------------------------
-        Requested time        : {self.simulation_time:.2f} h
-        Fermentation time     : {self.fermentation_time:.2f} h
-        Sugar conversion      : {((self.sugar_mass - self.sugar_concentration[-1]) / self.sugar_mass) * 100:.1f} %
+Yeast
+----------------------------------------------------------------------
+Strain                : {self.yeast.name}
+Maximum growth (μmax) : {self.mu_max:.3f} h⁻¹
+Ks                    : {self.yeast.Ks} g/L
 
 
-        Component Mass Balance
-        ----------------------------------------------------------------------
-        Component              Initial (g)        Final (g)
-        ----------------------------------------------------------------------
-        Biomass             {self.biomass_mass:12.2f}   {self.batch.liquid_volume * self.biomass_concentration[-1]:12.2f}
-        Sugar               {self.sugar_mass:12.2f}   {self.batch.liquid_volume * self.sugar_concentration[-1]:12.2f}
-        Ethanol             {0:12.2f}   {self.batch.liquid_volume * self.ethanol_concentration[-1]:12.2f}
-        Carbon dioxide      {0:12.2f}   {((self.batch.liquid_volume * self.ethanol_concentration[-1]) / (chemicals["ethanol"]["molar_mass"])) * chemicals["carbon_dioxide"]["molar_mass"]:12.2f}
-        ----------------------------------------------------------------------
-        """)
+Batch
+----------------------------------------------------------------------
+Liquid volume         : {self.batch.liquid_volume:.2f} L
+Sugar mass            : {self.batch.sugar_mass:.2f} g
+Biomass mass          : {self.batch.biomass_mass:.2f} g
+
+
+Simulation
+----------------------------------------------------------------------
+Requested time        : {self.simulation_time:.2f} h
+Fermentation time     : {self.fermentation_time:.2f} h
+Sugar conversion      : {((self.sugar_mass - self.sugar_concentration[-1]) / self.sugar_mass) * 100:.1f} %
+CO₂ mass escaped      : {''}
+
+======================================================================
+""")
 
     def run(self) -> None:
         print("Simulation is now running")
 
         self.prepare()
-        plotting.draw_fermentation_graph(self.dt,self.biomass_concentration,self.sugar_concentration,self.ethanol_concentration)
+        plotting.draw_fermentation_graph(
+            self.dt,
+            self.biomass_concentration,
+            self.sugar_concentration,
+            self.ethanol_concentration,
+        )
+        self.carbon_dioxided_model.plot_co2()
         self.print_status()

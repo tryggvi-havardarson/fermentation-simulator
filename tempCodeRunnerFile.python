@@ -1,73 +1,14 @@
-mol_massi_vatn=18.01528
+def jafna(T,A,B,C,D):
+    return A*T+B*(T**2)/2+C*(T**3)/3+D*(T**4)/4
 
-def varma_blabla(A,B,C,D,T):
-    svar = (A*T+B*(T**2)/2+C*(T**3)/3+D*(T**4)/4)
-    return svar
+def jafna2(T1,T2,A,B,C,D):
+    return (jafna(T2,A,B,C,D)-jafna(T1,A,B,C,D))
 
-def tegurdaeumo(T1,T2,A,B,C,D):
-    svar = varma_blabla(A,B,C,D,T2)-varma_blabla(A,B,C,D,T1)
-    return svar
+a=72.43
+b=0.0104
+c=0
+d=0
+t2=316.15
 
-def daemi22():
-    mol=(200/18.01528)
-    T1=373.15
-    T2=673.15
-    A=33.24
-    B=0.01924
-    C=1.055e-5
-    D=-3.596e-9
-    svar=tegurdaeumo(T1,T2,A,B,C,D)
-    return svar*mol
-
-
-mol_massi_vatn = 18.01528
-
-def varma_blabla(A, B, C, D, T):
-    svar = A*T + B*(T**2)/2 + C*(T**3)/3 + D*(T**4)/4
-    return svar
-
-def tegurdaeumo(T1, T2, A, B, C, D):
-    svar = varma_blabla(A, B, C, D, T2) - varma_blabla(A, B, C, D, T1)
-    return svar
-
-
-def daemi6():
-    # Mass flows kg/min
-    m1 = 75
-    m2 = 95
-
-    # Temperatures K
-    T1 = 278.15   # 5 C
-    T2 = 353.15   # 80 C
-    T3 = 298.15   # 25 C
-    Tout = 316.15 # 43 C
-
-    # Cp coefficients for liquid water
-    # Put your Table B.17 values here
-    A = 72.43
-    B = 0.0104
-    C = 0
-    D = 0
-
-    # Enthalpy changes, J/mol
-    dh1 = tegurdaeumo(T1, Tout, A, B, C, D)
-    dh2 = tegurdaeumo(T2, Tout, A, B, C, D)
-    dh3 = tegurdaeumo(T3, Tout, A, B, C, D)
-
-    # Convert known streams from kg/min -> mol/min
-    n1 = m1 * 1000 / mol_massi_vatn
-    n2 = m2 * 1000 / mol_massi_vatn
-
-    # Energy balance:
-    # n1*dh1 + n2*dh2 + n3*dh3 = 0
-
-    n3 = -(n1*dh1 + n2*dh2) / dh3
-
-    # mol/min -> kg/min
-    m3 = n3 * mol_massi_vatn / 1000
-
-    return m3
-
-
-print('svar við dæmi 6:', daemi6(), 'kg/min')
-print('svar við dæmi 2.2:',{daemi22()})
+print(f"(75*{jafna2(278.15,t2,a,b,c,d):.2f} + 95*{jafna2(353.15,t2,a,b,c,d):.2f}) / ({jafna2(298.15,t2,a,b,c,d):.2f})")
+print((75*jafna2(278.15,t2,a,b,c,d)+ 95*jafna2(353.15,t2,a,b,c,d)) / (jafna2(298.15,t2,a,b,c,d)))
