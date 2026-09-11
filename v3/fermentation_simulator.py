@@ -1,6 +1,5 @@
 import numpy as np
-
-from v3 import kinetics, plotting
+from v3 import kinetics, plotting, utils
 from v3.batch import Batch
 from v3.co2.co2_model import CarbonDioxideModel
 from v3.database import databases
@@ -8,7 +7,8 @@ from v3.reactor import Reactor
 from v3.yeast import Yeast
 
 chemicals = databases.chemicals
-
+#líklegast best að fara betur yfir öll nöfn, t.d. hafa alltaf sykur eða substrate
+#ekki sáttur með self úr batch og reactor
 
 class FermentationSimulator:
     def __init__(
@@ -43,9 +43,6 @@ class FermentationSimulator:
         self.biomass_concentration = None
         self.sugar_concentration = None
         self.ethanol_concentration = None
-
-    def mass_to_concentration(self, mass: float) -> float:
-        return mass / self.batch.liquid_volume
 
     def euler(self, Xn: float, Sn: float, mu_max: float) -> tuple:
         En = 0
@@ -95,8 +92,9 @@ class FermentationSimulator:
 
     def prepare(self) -> None:
 
-        sugar_concentration = self.mass_to_concentration(self.sugar_mass)
-        biomass_concentration = self.mass_to_concentration(self.biomass_mass)
+        sugar_concentration = utils.mass_to_concentration(self.sugar_mass)
+        biomass_concentration = utils.mass_to_concentration(self.biomass_mass)
+        
         self.mu_max = kinetics.rosso_cardinal(
             self.reactor.T_set,
             self.yeast.T_min,
@@ -112,6 +110,7 @@ class FermentationSimulator:
             self.fermentation_time,
         ) = self.euler(biomass_concentration, sugar_concentration, self.mu_max)
 
+#bæta við co2 massa
     def print_status(self) -> None:
         def print_status(self) -> None:
             print(f"""
@@ -150,6 +149,7 @@ CO₂ mass escaped      : {''}
 ======================================================================
 """)
 
+#jafnvel runna co2 í gegnum þetta eða búa til nýjan klasa sem rönnar allt
     def run(self) -> None:
         print("Simulation is now running")
 

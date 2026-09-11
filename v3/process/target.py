@@ -1,5 +1,7 @@
 from v3.chemistry import abv, brix
 
+#kannski betra að hafa sem klasa
+#þarf að tengja betur við rest, lítur random út
 water_density_20C = 998.2067  # kg/m^3
 
 
@@ -32,4 +34,11 @@ def target_volume(target_abv, target_volume, brix_honey):
     print(f"Target honey mass is: {target_honey_mass}g")
     print(f"Target water volume is: {target_water_volume}g")
 
-target_volume(4.5,4,80)
+print("Rowse, 4.5:")
+target_volume(4.5, 4.5, 80.08)
+print("euroshopper 4.5:")
+target_volume(4.5,4.5,81)
+print("euroshopper 5.0:")
+target_volume(5,3.5,81)
+
+

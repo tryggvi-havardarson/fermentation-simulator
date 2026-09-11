@@ -1,5 +1,5 @@
 import numpy as np
-
+from v3 import utils
 from v3.batch import Batch
 from v3.co2 import henrys_law
 from v3.database.databases import chemicals
@@ -17,27 +17,29 @@ class CarbonDioxideModel:
         self.reactor = reactor
         self.batch = batch
 
-        self.C_aq_history = []
-        self.y_CO2_history = []
+        self.co2_liquid_molarity_history = []
+        self.y_co2_history = []
         self.sim_mass_history = []
         self.kLa_history = []
 
         self.dt = 3.6e-3
+        self.yco2 = 0
+        self.co2_liquid_molarity = 0
+        self.ethanol_mass_fraction = 0
+        self.water_mass_fraction = 1
+
         self.sugar_concentration = None
         self.ethanol_concentration = None
-        self.fizz_velocity_constant_value = None
-        self.yco2 = 0
-        self.gas_transfer_speed_value = None
-        self.carbon_dioxide_liquid_molarity = 0
-        self.gas_production_speed = None
+
+        self.kLa = None
+        self.co2_transfer_rate = None
+        self.co2_production_rate = None
         self.henrys_constant = None
+        self.glucose_molarity = None
 
         self.gas_volume = reactor.volume - batch.liquid_volume
-        self.w_ethanol = 0
-        self.w_water = 1
-        self.glucose_molarity = None
         self.total_moles = (reactor.P_tot * self.gas_volume) / (
-            (self.reactor.T_set + 273.15) * R
+            (utils.celsius_to_kelvin(self.reactor.T_set)) * R
         )
 
     def update_sugar_concentration(self, new_value) -> None:
@@ -48,107 +50,106 @@ class CarbonDioxideModel:
 
         self.ethanol_concentration = new_value
 
-        
+    def update_solvent_mass_fractions(self) -> None:
+
         water_mass = self.batch.water_mass
-        ethanol_mass = self.mass_concentration_to_mass(self.ethanol_concentration)
+        ethanol_mass = utils.mass_concentration_to_mass(
+            self.ethanol_concentration, self.batch.liquid_volume
+        )
         total_solvent_mass = water_mass + ethanol_mass
 
-        self.w_water = self.mass_to_mass_fraction(water_mass, total_solvent_mass)
-        self.w_ethanol = self.mass_to_mass_fraction(ethanol_mass, total_solvent_mass)
+        self.water_mass_fraction = utils.mass_to_mass_fraction(
+            water_mass, total_solvent_mass
+        )
+        self.ethanol_mass_fraction = utils.mass_to_mass_fraction(
+            ethanol_mass, total_solvent_mass
+        )
 
-    def update_fizz_velocity_constant(
+    def update_kLa(
         self, Rg, K=0.5, b1=1.8, b2=2.5, alpha=0.5, beta=-0.4, gamma=0.3
-    ):
+    ) -> None:
 
-        self.fizz_velocity_constant_value = (
+        self.kLa = (
             K
             * ((Rg) ** alpha)
             * ((1 + b1 * self.glucose_molarity) ** beta)
             * ((1 + b2 * self.w_ethanol) ** gamma)
         )
 
-    def update_gas_transfer_speed(self) -> None:
+    def update_co2_transfer_rate(self) -> None:
 
         print(
-            "kLa =", self.fizz_velocity_constant_value,
-            "V =", self.batch.liquid_volume,
-            "Caq =", self.carbon_dioxide_liquid_molarity,
-            "kH =", self.henrys_constant,
-            "yco2 =", self.yco2
+            "kLa =",
+            self.kLa,
+            "V =",
+            self.batch.liquid_volume,
+            "Caq =",
+            self.co2_liquid_molarity,
+            "kH =",
+            self.henrys_constant,
+            "yco2 =",
+            self.yco2,
         )
 
-        self.gas_transfer_speed_value = (
-            self.fizz_velocity_constant_value
+        self.co2_transfer_rate = (
+            self.kLa
             * self.batch.liquid_volume
-            * (self.carbon_dioxide_liquid_molarity - (self.henrys_constant * self.yco2))
+            * (self.co2_liquid_molarity - (self.henrys_constant * self.yco2))
         )
 
     def update_yco2(self) -> None:
 
-        dyco2_dt = (self.gas_transfer_speed_value * (1 - self.yco2)) / self.total_moles
+        dyco2_dt = (self.co2_transfer_rate * (1 - self.yco2)) / self.total_moles
 
         self.yco2 += dyco2_dt * self.dt
 
-        self.y_CO2_history.append(self.yco2)
+        self.y_co2_history.append(self.yco2)
 
-    def update_gas_production_speed(self, new_ethanol_value) -> None:
+    def update_co2_production_rate(self, new_ethanol_value) -> None:
 
+        # updata tvisvar, kannski betra að gera öðruvísi eða nota filler
         if self.ethanol_concentration is not None:
             previous_ethanol_concentration = self.ethanol_concentration
 
             self.update_ethanol_concentration(new_ethanol_value)
 
-            self.gas_production_speed = (
+            self.co2_production_rate = (
                 (self.ethanol_concentration) - (previous_ethanol_concentration)
             ) / self.dt
         else:
             self.update_ethanol_concentration(new_ethanol_value)
-            self.gas_production_speed = self.ethanol_concentration
+            self.co2_production_rate = self.ethanol_concentration
 
-        self.gas_production_speed *=((self.batch.liquid_volume)/chemicals["ethanol"]["molar_mass"])
+        self.co2_production_rate *= (self.batch.liquid_volume) / chemicals["ethanol"][
+            "molar_mass"
+        ]
 
-    def update_carbon_dioxide_liquid_molarity(self) -> None:
-        
+    def update_co2_liquid_molarity(self) -> None:
+
         dCco2_dt = (
-            self.gas_production_speed / self.batch.liquid_volume
-        ) - (self.gas_transfer_speed_value / self.batch.liquid_volume)
+            self.co2_production_rate - self.co2_transfer_rate
+        ) / self.batch.liquid_volume
 
-        self.carbon_dioxide_liquid_molarity += dCco2_dt * self.dt
+        self.co2_liquid_molarity += dCco2_dt * self.dt
 
-        self.C_aq_history.append(self.carbon_dioxide_liquid_molarity)
-
-    def mass_concentration_to_molarity(self, mass_concentration, molar_mass) -> float:
-
-        molarity = mass_concentration / molar_mass
-
-        return molarity
-
-    def mass_concentration_to_mass(self, mass_concentration) -> float:
-
-        mass = mass_concentration * self.batch.liquid_volume
-
-        return mass
-
-    def mass_to_mass_fraction(
-        self, mass_of_specific_solvant, total_solvent_mass
-    ) -> float:
-
-        mass_fraction = mass_of_specific_solvant / total_solvent_mass
-
-        return mass_fraction
+        self.co2_liquid_molarity_history.append(self.co2_liquid_molarity)
 
     def update_glucose_molarity(self) -> None:
 
-        self.glucose_molarity = self.mass_concentration_to_molarity(
+        self.glucose_molarity = utils.mass_concentration_to_molarity(
             self.sugar_concentration, chemicals["glucose"]["molar_mass"]
         )
 
     def update_kH(self) -> None:
 
-        self.henrys_constant = henrys_law.kH_final(
-            self.reactor.T_set+273.15, self.glucose_molarity, self.w_water, self.w_ethanol
+        self.henrys_constant = henrys_law.calculate_kH_final(
+            utils.celsius_to_kelvin(self.reactor.T_set),
+            self.glucose_molarity,
+            self.water_mass_fraction,
+            self.ethanol_mass_fraction,
         )
 
+    # ákveða hvernig ég vill hafa heildar massatap og/eða co2 massa tap
     def update_mass_transfer(self) -> None:
 
         M_air = (chemicals["oxygen"]["molar_mass"] * 0.21) + (
@@ -156,7 +157,7 @@ class CarbonDioxideModel:
         )
         M_co2 = chemicals["carbon_dioxide"]["molar_mass"]
 
-        mass_transfer_value = self.gas_transfer_speed_value * (
+        mass_transfer_value = self.co2_transfer_rate * (
             M_air * (1 - self.yco2) + M_co2 * self.yco2
         )
 
@@ -167,19 +168,22 @@ class CarbonDioxideModel:
 
         self.sim_mass_history.append(mass_transfer_value)
 
+    # sýnist ok en þarf að fara betur yfir
     def update_values(self, new_ethanol_value, new_sugar_value) -> None:
 
-        self.update_gas_production_speed(new_ethanol_value)
+        self.update_co2_production_rate(new_ethanol_value)
         self.update_sugar_concentration(new_sugar_value)
+        self.update_solvent_mass_fractions()
         self.update_glucose_molarity()
         self.update_kH()
 
-        self.update_fizz_velocity_constant(self.gas_production_speed)
-        self.update_gas_transfer_speed()
+        self.update_kLa(self.co2_production_rate)
+        self.update_co2_transfer_rate()
         self.update_yco2()
-        self.update_carbon_dioxide_liquid_molarity()
+        self.update_co2_liquid_molarity()
         self.update_mass_transfer()
 
+    # ógeðslegt plott, þarf að gera betra sem sýnir réttar upplýsingar, líklega best að hafa method sem returnar listum líka
     def plot_co2(self):
         import matplotlib.pyplot as plt
 

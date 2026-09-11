@@ -1,14 +1,21 @@
-def jafna(T,A,B,C,D):
-    return A*T+B*(T**2)/2+C*(T**3)/3+D*(T**4)/4
+def tekka_deila(a):
+    if a != float or int:
+         print("ekki tala")
+         return
 
-def jafna2(T1,T2,A,B,C,D):
-    return (jafna(T2,A,B,C,D)-jafna(T1,A,B,C,D))
+    a=str(a)
 
-a=72.43
-b=0.0104
-c=0
-d=0
-t2=316.15
+    if "." in a:
+        b=len(a.split("."))
+        a=float(a)
+        a=a*10**b
+    else:
+         a=float(a)
 
-print(f"(75*{jafna2(278.15,t2,a,b,c,d):.2f} + 95*{jafna2(353.15,t2,a,b,c,d):.2f}) / ({jafna2(298.15,t2,a,b,c,d):.2f})")
-print((75*jafna2(278.15,t2,a,b,c,d)+ 95*jafna2(353.15,t2,a,b,c,d)) / (jafna2(298.15,t2,a,b,c,d)))
+    if a%2 ==0:
+            print("slett tala")
+    else:
+        print("ekki slett")
+
+tekka_deila('4.2')
+tekka_deila(5)

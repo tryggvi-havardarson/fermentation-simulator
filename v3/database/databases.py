@@ -1,3 +1,6 @@
+#er kannski betra að splitta öllu upp í files? 
+#Taka chemical formula úr ef ég get ekki fittað í flow chart
+
 yeast_database = {
     "yeast_proxy": {
         "Ks": 0.18,  # g/L glucose
