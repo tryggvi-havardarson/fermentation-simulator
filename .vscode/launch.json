@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run V3",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "v3.main",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

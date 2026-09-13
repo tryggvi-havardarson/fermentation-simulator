@@ -4,7 +4,6 @@ from v3.batch import Batch
 from v3.co2.co2_model import CarbonDioxideModel
 from v3.database import databases
 from v3.reactor import Reactor
-from v3.yeast import Yeast
 
 chemicals = databases.chemicals
 #líklegast best að fara betur yfir öll nöfn, t.d. hafa alltaf sykur eða substrate
@@ -14,9 +13,8 @@ class FermentationSimulator:
     def __init__(
         self,
         reactor: Reactor,
-        yeast: Yeast,
-        carbon_dioxided_model: CarbonDioxideModel,
         batch: Batch,
+        carbon_dioxided_model: CarbonDioxideModel,
         simulation_time: float,
     ) -> None:
         if batch.sugar_mass < 0:
@@ -29,7 +27,6 @@ class FermentationSimulator:
             raise ValueError("Simulation time must be greater than zero.")
 
         self.reactor = reactor
-        self.yeast = yeast
         self.carbon_dioxided_model = carbon_dioxided_model
         self.batch = batch
         self.biomass_mass = batch.biomass_mass
@@ -56,15 +53,15 @@ class FermentationSimulator:
         self.carbon_dioxided_model.update_values(En, Sn)
 
         while count < (self.simulation_time / self.dt) and Sn > 1e-6:
-            X = Xn + (self.dt * (Xn * mu_max * Sn)) / (self.yeast.Ks + Sn)
+            X = Xn + (self.dt * (Xn * mu_max * Sn)) / (self.batch.yeast.Ks + Sn)
             S = Sn - (self.dt * (mu_max * Xn * Sn)) / (
-                self.yeast.Y_xs * (self.yeast.Ks + Sn)
+                self.batch.yeast.Y_xs * (self.batch.yeast.Ks + Sn)
             )
 
             Xn = X
             Sn = max(S, 0)
 
-            glucose_to_ethanol = (S0 - Sn) * (1 - self.yeast.Y_xs)
+            glucose_to_ethanol = (S0 - Sn) * (1 - self.batch.yeast.Y_xs)
 
             En = (
                 2
@@ -92,15 +89,15 @@ class FermentationSimulator:
 
     def prepare(self) -> None:
 
-        sugar_concentration = utils.mass_to_concentration(self.sugar_mass)
-        biomass_concentration = utils.mass_to_concentration(self.biomass_mass)
-        
+        sugar_concentration = utils.mass_to_concentration(self.sugar_mass, self.batch.liquid_volume)
+        biomass_concentration = utils.mass_to_concentration(self.biomass_mass, self.batch.liquid_volume)
+
         self.mu_max = kinetics.rosso_cardinal(
             self.reactor.T_set,
-            self.yeast.T_min,
-            self.yeast.T_max,
-            self.yeast.T_opt,
-            self.yeast.mu_opt,
+            self.batch.yeast.T_min,
+            self.batch.yeast.T_max,
+            self.batch.yeast.T_opt,
+            self.batch.yeast.mu_opt,
         )
 
         (
@@ -127,9 +124,9 @@ Total pressure        : {self.reactor.P_tot:.2f}
 
 Yeast
 ----------------------------------------------------------------------
-Strain                : {self.yeast.name}
+Strain                : {self.batch.yeast.name}
 Maximum growth (μmax) : {self.mu_max:.3f} h⁻¹
-Ks                    : {self.yeast.Ks} g/L
+Ks                    : {self.batch.yeast.Ks} g/L
 
 
 Batch
